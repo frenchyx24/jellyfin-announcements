@@ -25,7 +25,7 @@
     } catch (e) { say("Accès refusé ou serveur indisponible. Connectez-vous avec un compte administrateur.", true); }
   };
   form.addEventListener("submit", async event => { event.preventDefault(); const data = new FormData(form);
-    const payload = { title: data.get("title"), message: data.get("message"), level: data.get("level"), dismissible: data.has("dismissible"), enabled: true, startsAt: new Date().toISOString(), endsAt: data.get("endsAt") ? new Date(data.get("endsAt")).toISOString() : null };
+    const payload = { title: data.get("title"), message: data.get("message"), level: data.get("level"), dismissible: data.has("dismissible"), enabled: true, startsAt: data.get("startsAt") ? new Date(data.get("startsAt")).toISOString() : new Date().toISOString(), endsAt: data.get("endsAt") ? new Date(data.get("endsAt")).toISOString() : null };
     try { await call("Admin", { method: "POST", body: JSON.stringify(payload) }); form.reset(); form.elements.dismissible.checked = true; say("Annonce publiée."); await load(); } catch (e) { say("Publication impossible. Vérifiez les champs et vos droits administrateur.", true); }
   });
   load();
