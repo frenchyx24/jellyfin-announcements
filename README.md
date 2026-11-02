@@ -13,7 +13,7 @@ Plugin Jellyfin pour annonces et notifications visuelles, avec interface compact
 
 ## État
 
-Version initiale en préparation. Build CI activé pour Jellyfin 12 / .NET 10. Aucun remplacement sur NFLIX avant validation.
+Dépôt neuf. Cible initiale Jellyfin 12 / .NET 10. Aucun remplacement sur NFLIX avant compilation et validation.
 
 ## Développement
 
