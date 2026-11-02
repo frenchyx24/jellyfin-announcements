@@ -45,7 +45,7 @@ public sealed class NoticeStore
         lock (_gate)
         {
             var all = Load();
-            if (!all.RemoveAll(n => n.Id == id).Equals(1)) return false;
+            if (all.RemoveAll(n => n.Id == id) == 0) return false;
             Persist(all);
             return true;
         }
@@ -55,7 +55,7 @@ public sealed class NoticeStore
     {
         if (!File.Exists(_path)) return new List<Notice>();
         try { return JsonSerializer.Deserialize<List<Notice>>(File.ReadAllText(_path)) ?? new List<Notice>(); }
-        catch (JsonException) { return new List<Notice>(); }
+        catch (JsonException ex) { throw new InvalidDataException("Announcement data is invalid; preserve the file before recovery.", ex); }
     }
 
     private void Persist(List<Notice> notices)
