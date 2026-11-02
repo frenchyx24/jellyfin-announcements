@@ -1,0 +1,9 @@
+{
+  "guid": "a7c3b3b7-2b1b-4d16-9ad8-a0d7e510ce31",
+  "name": "Nflix Notice",
+  "description": "Animated announcements and notifications for Jellyfin.",
+  "overview": "A polished, compact announcement center for Jellyfin users and admins.",
+  "owner": "frenchyx24",
+  "category": "Notifications",
+  "versions": []
+}
