@@ -1,4 +1,4 @@
-name: Build
+name: Build and package
 on:
   push:
     branches: [main]
@@ -6,6 +6,8 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -13,3 +15,26 @@ jobs:
           dotnet-version: 10.0.x
       - run: dotnet restore
       - run: dotnet build -c Release --no-restore
+      - name: Publish plugin bundle
+        run: |
+          dotnet publish -c Release --no-restore -o publish
+          mkdir -p package/NflixNotice_0.1.0.0
+          cp publish/Jellyfin.Plugin.NflixNotice.dll publish/Jellyfin.Plugin.NflixNotice.deps.json package/NflixNotice_0.1.0.0/
+          cat > package/NflixNotice_0.1.0.0/manifest.json <<'EOF'
+          {"Id":"a7c3b3b7-2b1b-4d16-9ad8-a0d7e510ce31","Name":"Nflix Notice","Description":"Animated announcements and visual notifications for Jellyfin.","Version":"0.1.0.0","TargetAbi":"12.0.0.0","Owner":"frenchyx24","Category":"Notifications"}
+          EOF
+          cat > package/NflixNotice_0.1.0.0/meta.json <<'EOF'
+          {"category":"Notifications","description":"Animated announcements and visual notifications for Jellyfin.","guid":"a7c3b3b7-2b1b-4d16-9ad8-a0d7e510ce31","name":"Nflix Notice","overview":"A polished announcement center for Jellyfin users and admins.","owner":"frenchyx24","targetAbi":"12.0.0.0","version":"0.1.0.0","status":"Active","autoUpdate":false}
+          EOF
+          cd package && zip -qr ../NflixNotice-v0.1.0.zip NflixNotice_0.1.0.0
+      - name: Publish GitHub release
+        if: contains(github.event.head_commit.message, 'release: package v0.1.0')
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v0.1.0
+          name: Nflix Notice v0.1.0
+          body: First Jellyfin 12 plugin build.
+          files: NflixNotice-v0.1.0.zip
+          prerelease: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
