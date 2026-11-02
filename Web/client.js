@@ -12,6 +12,8 @@
   const css = document.createElement("link");
   css.rel = "stylesheet"; css.href = base + "/Plugins/NflixNotice/notice.css"; document.head.append(css);
   const dismissed = new Set(JSON.parse(sessionStorage.getItem("nflixNoticeDismissed") || "[]"));
+  const seen = new Set(JSON.parse(sessionStorage.getItem("nflixNoticeSeen") || "[]"));
+  let toastTimer;
   let notices = [];
   const button = document.createElement("button");
   button.className = "nn-launch"; button.type = "button"; button.setAttribute("aria-label", "Ouvrir les annonces");
@@ -19,7 +21,9 @@
   const panel = document.createElement("section");
   panel.className = "nn-panel"; panel.setAttribute("aria-label", "Centre d’annonces"); panel.hidden = true;
   panel.innerHTML = '<header class="nn-panel-head"><div><span class="nn-kicker">NFLIX · À LA UNE</span><h2>Le fil du serveur</h2></div><button class="nn-close" type="button" aria-label="Fermer">×</button></header><div class="nn-feed"></div><footer class="nn-panel-foot">Les infos importantes, sans interrompre votre soirée.</footer>';
-  const widget = document.createElement("div"); widget.className = "nn-widget"; widget.append(panel, button); document.body.append(widget);
+  const toast = document.createElement("div"); toast.className = "nn-toast"; toast.hidden = true; toast.setAttribute("role", "status");
+  toast.innerHTML = '<span class="nn-toast-glow" aria-hidden="true">✦</span><div class="nn-toast-copy"><small>NOUVELLE ANNONCE</small><strong></strong><span></span></div><button type="button" aria-label="Fermer">×</button>';
+  const widget = document.createElement("div"); widget.className = "nn-widget"; widget.append(panel, toast, button); document.body.append(widget);
   const feed = panel.querySelector(".nn-feed"), badge = button.querySelector(".nn-badge");
   const render = () => {
     const visible = notices.filter(n => !dismissed.has(n.id));
@@ -38,9 +42,23 @@
       feed.append(card);
     });
   };
-  const refresh = async () => { try { notices = await api("Active"); render(); } catch (_) { button.hidden = true; } };
-  button.addEventListener("click", () => { panel.hidden = !panel.hidden; if (!panel.hidden) { panel.classList.remove("nn-pop"); requestAnimationFrame(() => panel.classList.add("nn-pop")); } });
+  const showToast = notice => {
+    toast.querySelector("strong").textContent = notice.title;
+    toast.querySelector("span:not(.nn-toast-glow)").textContent = notice.message;
+    toast.className = "nn-toast nn-level-" + notice.level; toast.hidden = false;
+    clearTimeout(toastTimer); toastTimer = window.setTimeout(() => { toast.hidden = true; }, 8500);
+  };
+  const refresh = async () => { try {
+    notices = await api("Active");
+    const fresh = notices.filter(n => !seen.has(n.id)).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt));
+    fresh.forEach(n => seen.add(n.id));
+    if (fresh.length) { sessionStorage.setItem("nflixNoticeSeen", JSON.stringify([...seen])); showToast(fresh[0]); }
+    render();
+  } catch (_) { button.hidden = true; } };
+  button.addEventListener("click", () => { panel.hidden = !panel.hidden; toast.hidden = true; if (!panel.hidden) { panel.classList.remove("nn-pop"); requestAnimationFrame(() => panel.classList.add("nn-pop")); } });
   panel.querySelector(".nn-close").addEventListener("click", () => { panel.hidden = true; });
+  toast.querySelector("button").addEventListener("click", event => { event.stopPropagation(); toast.hidden = true; });
+  toast.addEventListener("click", () => { toast.hidden = true; panel.hidden = false; render(); });
   document.addEventListener("keydown", event => { if (event.key === "Escape") panel.hidden = true; });
   refresh(); window.setInterval(refresh, 90000);
 })();
