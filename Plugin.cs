@@ -4,11 +4,12 @@ using System.IO;
 using MediaBrowser.Common.Plugins;
 using MediaBrowser.Common.Configuration;
 using MediaBrowser.Model.Plugins;
+using Jellyfin.Plugin.NflixNotice.Configuration;
 using MediaBrowser.Model.Serialization;
 
 namespace Jellyfin.Plugin.NflixNotice;
 
-public sealed class Plugin : BasePlugin, IHasWebPages
+public sealed class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
 {
     public static Plugin? Instance { get; private set; }
     public NoticeStore Store { get; }
