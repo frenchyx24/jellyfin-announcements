@@ -1,9 +1,6 @@
 using System;
-using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Jellyfin.Plugin.NflixNotice.Api;
@@ -15,20 +12,17 @@ public sealed class NoticeController : ControllerBase
     private readonly NoticeStore _store;
     public NoticeController() => _store = Plugin.Instance?.Store ?? throw new InvalidOperationException("Nflix Notice is not loaded.");
 
-    [HttpGet("Active")]
-    [Authorize]
+    [HttpGet("Active"), Authorize]
     public IActionResult Active()
     {
         Response.Headers.CacheControl = "no-store";
         return Ok(_store.GetActive(DateTimeOffset.UtcNow));
     }
 
-    [HttpGet("Admin")]
-    [Authorize(Policy = "RequiresElevation")]
+    [HttpGet("Admin"), Authorize(Policy = "RequiresElevation")]
     public IActionResult All() => Ok(_store.GetAll());
 
-    [HttpPost("Admin")]
-    [Authorize(Policy = "RequiresElevation")]
+    [HttpPost("Admin"), Authorize(Policy = "RequiresElevation")]
     public IActionResult Save([FromBody] Notice? notice)
     {
         if (notice is null) return BadRequest("Request body is required.");
@@ -42,16 +36,16 @@ public sealed class NoticeController : ControllerBase
         return Ok(_store.Save(notice));
     }
 
-    [HttpDelete("Admin/{id:guid}")]
-    [Authorize(Policy = "RequiresElevation")]
+    [HttpDelete("Admin/{id:guid}"), Authorize(Policy = "RequiresElevation")]
     public IActionResult Delete(Guid id) => _store.Delete(id) ? NoContent() : NotFound();
 
-    [HttpGet("client.js")]
-    [AllowAnonymous]
+    [HttpGet("client.js"), AllowAnonymous]
     public IActionResult ClientScript() => Embedded("Jellyfin.Plugin.NflixNotice.Web.client.js", "application/javascript");
 
-    [HttpGet("notice.css")]
-    [AllowAnonymous]
+    [HttpGet("admin.js"), AllowAnonymous]
+    public IActionResult AdminScript() => Embedded("Jellyfin.Plugin.NflixNotice.Web.admin.js", "application/javascript");
+
+    [HttpGet("notice.css"), AllowAnonymous]
     public IActionResult Styles() => Embedded("Jellyfin.Plugin.NflixNotice.Web.notice.css", "text/css");
 
     private IActionResult Embedded(string name, string contentType)
