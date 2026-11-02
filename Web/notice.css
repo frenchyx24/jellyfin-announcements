@@ -1,5 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
-:root{--nn-bg:#0c1020;--nn-panel:rgba(19,25,44,.94);--nn-card:rgba(255,255,255,.045);--nn-border:rgba(185,198,255,.13);--nn-ink:#f3f5ff;--nn-muted:#98a3bd;--nn-violet:#a78bfa;--nn-cyan:#6fe6db;--nn-font:'DM Sans',system-ui,sans-serif;--nn-display:'Manrope',system-ui,sans-serif}
+:root{--nn-bg:#0c1020;--nn-panel:rgba(19,25,44,.94);--nn-card:rgba(255,255,255,.045);--nn-border:rgba(185,198,255,.13);--nn-ink:#f3f5ff;--nn-muted:#98a3bd;--nn-violet:#a78bfa;--nn-cyan:#6fe6db;--nn-font:system-ui,-apple-system,'Segoe UI',sans-serif;--nn-display:system-ui,-apple-system,'Segoe UI',sans-serif}
 .nn-widget,.nn-admin-page{font-family:var(--nn-font);color:var(--nn-ink)}
 .nn-widget *,.nn-admin *{box-sizing:border-box}
 .nn-launch{position:fixed;z-index:100100;right:26px;bottom:26px;display:flex;align-items:center;gap:10px;border:1px solid rgba(190,177,255,.36);border-radius:999px;padding:12px 17px;background:linear-gradient(125deg,rgba(32,39,67,.97),rgba(25,31,54,.95));color:var(--nn-ink);font:600 14px var(--nn-font);letter-spacing:.01em;box-shadow:0 12px 38px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.1);cursor:pointer;backdrop-filter:blur(18px);transition:transform .2s ease,border-color .2s,box-shadow .2s}
