@@ -10,7 +10,10 @@
     const states = { archived: 'Archivée', draft: 'Brouillon', scheduled: 'Programmée', expired: 'Terminée', published: 'Publiée' };
     let items = [], editing = null, pending = false;
     const call = async (path, options = {}) => {
-      const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, signal: abort.signal, headers: { 'X-Emby-Token': client.accessToken(), 'Content-Type': 'application/json' } });
+      const headers = { 'Content-Type': 'application/json' };
+      if (client.setRequestHeaders) client.setRequestHeaders(headers);
+      else headers.Authorization = 'MediaBrowser Client="Nflix Notice", Device="Web", DeviceId="nflix-notice-web", Version="0.2.0", Token="' + client.accessToken() + '"';
+      const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, signal: abort.signal, headers });
       if (!response.ok) { const text = await response.text(); throw new Error(response.status === 403 ? 'Ce compte ne dispose pas des droits administrateur.' : response.status === 401 ? 'Session expirée. Reconnectez-vous.' : text.slice(0, 300) || 'Erreur serveur ' + response.status); }
       return response.status === 204 ? null : response.json();
     };

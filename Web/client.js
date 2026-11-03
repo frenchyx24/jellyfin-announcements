@@ -17,7 +17,10 @@
   const stored = type => { try { return new Set(JSON.parse(localStorage.getItem(storageKey(type)) || '[]')); } catch { return new Set(); } };
   const persist = () => { try { localStorage.setItem(storageKey('read'), JSON.stringify([...read].slice(-2000))); localStorage.setItem(storageKey('shown'), JSON.stringify([...shown].slice(-2000))); } catch {} };
   const call = async (path, options = {}) => {
-    const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, headers: { 'X-Emby-Token': client.accessToken(), 'Content-Type': 'application/json' } });
+    const headers = { 'Content-Type': 'application/json' };
+    if (client.setRequestHeaders) client.setRequestHeaders(headers);
+    else headers.Authorization = 'MediaBrowser Client="Nflix Notice", Device="Web", DeviceId="nflix-notice-web", Version="0.2.0", Token="' + client.accessToken() + '"';
+    const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, headers });
     if (!response.ok) { const error = new Error(response.status === 401 ? 'Session expirée. Reconnectez-vous.' : 'Impossible de charger les annonces (' + response.status + ').'); error.status = response.status; throw error; }
     return response.status === 204 ? null : response.json();
   };
