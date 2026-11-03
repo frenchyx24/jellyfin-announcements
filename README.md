@@ -1,37 +1,56 @@
 # Nflix Notice
 
-Plugin Jellyfin pour annonces et notifications visuelles, avec interface compacte intégrée au client web.
+Plugin Jellyfin 12 pour communiquer avec les utilisateurs de NFLIX, avec dashboards administrateur et utilisateur intégrés au client web.
 
-## Expérience
+## Version 0.2.0
 
-- Bouton flottant animé, discret et accessible depuis Jellyfin Web.
-- Toast animé à l'arrivée d'une annonce, plus panneau responsive.
-- Console d'administration: publier, programmer et retirer une annonce.
-- Trois niveaux: information, attention et important.
-- Texte rendu comme texte, jamais comme HTML fourni par annonce.
-- Lecture réservée aux utilisateurs connectés; écriture réservée aux administrateurs.
+### Administration
 
-## Version 0.1.1
+Ouvrez **Annonces > Administration** depuis le bouton flottant, ou **Dashboard > Plugins > Nflix Notice**.
 
-Build testé sur .NET 10 et ciblant Jellyfin 12. Remplacement sur NFLIX en attente d'installation contrôlée.
+- Créer, modifier, dupliquer et supprimer une publication.
+- Enregistrer un brouillon invisible aux utilisateurs.
+- Programmer une publication avec une date de début et une date de fin de popup.
+- Archiver et restaurer une publication sans supprimer son historique.
+- Catégories : annonce, mise à jour, maintenance, incident.
+- Priorités : information, attention, urgent.
+- Version ou service concerné, bouton avec lien HTTP/HTTPS, épinglage.
+- Activation de la popup indépendante du dashboard.
+- Aperçu utilisateur, modèles, recherche, filtres et compteurs.
+
+### Utilisateurs
+
+- Dashboard avec toutes les publications diffusées, dont les anciennes publications terminées ou archivées.
+- Filtres par catégorie, recherche et filtre des publications non lues.
+- Suivi de lecture séparé par serveur et utilisateur dans le navigateur.
+- Popup animée lors des nouvelles publications, bouton permanent avec badge des non lues.
+- Interface responsive et respect de la préférence de réduction des animations.
+
+Les annonces de mises à jour sont rédigées par les administrateurs. Cette version ne détecte pas automatiquement les mises à jour du serveur.
 
 ## Développement
 
-Prérequis: .NET 10 SDK.
+Prérequis : .NET 10 SDK.
 
 ```sh
 dotnet restore
 dotnet build -c Release
+node --check Web/client.js
+node --check Web/admin.js
 ```
 
 ## Installation
 
-Le script client doit être activé dans JavaScript Injector avec l'URL locale: `/Plugins/NflixNotice/client.js`. La console admin apparaît dans Dashboard > Plugins > Nflix Notice.
+Activez le script dans JavaScript Injector avec l’URL locale `/Plugins/NflixNotice/client.js`.
 
-Le bundle d'installation accompagne la release GitHub. Vérifie le build et le checksum avant installation.
+Installez le bundle de la release GitHub, puis redémarrez Jellyfin. Rechargez le client web pour charger les nouveaux scripts.
 
-## Sécurité et déploiement
+## Sécurité et données
 
-Le script client appelle uniquement l'API du même serveur. Les lectures exigent une connexion Jellyfin; écritures exigent droits administrateur.
+Lectures réservées aux comptes connectés. Toutes les écritures exigent des droits administrateur côté serveur.
 
-L'ancien plugin et ses annonces sont sauvegardés sur NFLIX avant remplacement. Redémarrage Jellyfin requis.
+Les messages sont rendus en texte, jamais comme HTML. Les liens sont limités à HTTP et HTTPS.
+
+Les brouillons et publications futures ne sont pas exposés dans le dashboard utilisateur. Fermer une popup ne retire pas la publication du dashboard.
+
+Le fichier `data/plugins/NflixNotice/notices.json` est conservé lors des mises à jour. Sauvegardez le plugin et ses données avant installation.

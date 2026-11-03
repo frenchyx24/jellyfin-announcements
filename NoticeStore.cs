@@ -25,7 +25,12 @@ public sealed class NoticeStore
 
     public IReadOnlyList<Notice> GetActive(DateTimeOffset now)
     {
-        lock (_gate) return Load().Where(n => n.Enabled && n.StartsAt <= now && (!n.EndsAt.HasValue || n.EndsAt > now)).OrderByDescending(n => n.CreatedAt).ToArray();
+        lock (_gate) return Load().Where(n => n.Enabled && !n.Archived && n.StartsAt <= now && (!n.EndsAt.HasValue || n.EndsAt > now)).OrderByDescending(n => n.CreatedAt).ToArray();
+    }
+
+    public IReadOnlyList<Notice> GetFeed(DateTimeOffset now)
+    {
+        lock (_gate) return Load().Where(n => n.Enabled && n.StartsAt <= now).OrderByDescending(n => n.Pinned).ThenByDescending(n => n.StartsAt).ToArray();
     }
 
     public Notice Save(Notice notice)
@@ -34,6 +39,8 @@ public sealed class NoticeStore
         {
             var all = Load();
             var index = all.FindIndex(n => n.Id == notice.Id);
+            notice.CreatedAt = index < 0 ? DateTimeOffset.UtcNow : all[index].CreatedAt;
+            notice.UpdatedAt = DateTimeOffset.UtcNow;
             if (index < 0) all.Add(notice); else all[index] = notice;
             Persist(all);
             return notice;
