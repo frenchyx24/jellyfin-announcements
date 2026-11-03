@@ -8,10 +8,14 @@
   css.href = (location.pathname.includes('/web') ? location.pathname.split('/web')[0] : '') + '/Plugins/NflixNotice/notice.css'; document.head.append(css);
   const widget = document.createElement('div'); widget.className = 'nn-widget'; widget.hidden = true;
   widget.innerHTML = `<button class="nn-launch" type="button" aria-label="Ouvrir le centre d’annonces"><span class="nn-launch-icon" aria-hidden="true">✦</span><span>Annonces</span><b class="nn-badge" hidden></b></button><div class="nn-toast" hidden role="status"><span class="nn-toast-glow" aria-hidden="true">✦</span><div class="nn-toast-copy"><small></small><strong></strong><span></span></div><button type="button" aria-label="Fermer la notification">×</button></div>
+    <section class="nn-panel" id="nn-recent-panel" aria-label="Dernières annonces" hidden><header class="nn-panel-head"><div><span class="nn-brand">NFLIX / À la une</span><h2>Le fil du serveur</h2></div><button class="nn-panel-close" type="button" aria-label="Fermer les dernières annonces">×</button></header><div class="nn-recent-feed"></div><footer class="nn-panel-foot"><p>Les dernières annonces ici, tout l’historique dans votre dashboard.</p><button type="button" class="nn-primary" data-more>Voir plus d’annonces</button><button type="button" class="nn-secondary" data-panel-admin hidden>Administration</button></footer></section>
     <dialog class="nn-dashboard"><div class="nn-dashboard-shell"><header class="nn-dashboard-head"><div><span class="nn-brand">NFLIX / Le fil du serveur</span><h1>Quoi de neuf ?</h1><p>Retrouvez les annonces et les changements, même après avoir fermé leur popup.</p></div><button type="button" class="nn-close" aria-label="Fermer le dashboard">×</button></header><nav class="nn-dashboard-tabs"><button type="button" data-mode="user" aria-pressed="true">Mon dashboard</button><button type="button" data-mode="admin" hidden aria-pressed="false">Administration</button></nav><div class="nn-user-dashboard"><div class="nn-feed-summary"></div><div class="nn-user-toolbar"><label>Rechercher<input type="search" placeholder="Titre, nouveautés, version…" data-search></label><label class="nn-check"><input type="checkbox" data-unread> Non lues uniquement</label><button type="button" class="nn-secondary" data-read-all>Tout marquer comme lu</button><button type="button" class="nn-secondary" data-refresh>Actualiser</button></div><nav class="nn-category-tabs" aria-label="Catégories"></nav><div class="nn-feed-error" role="status"></div><div class="nn-user-feed"></div></div><div class="nn-admin" data-admin-root hidden></div></div></dialog>`;
   document.body.append(widget);
   const q = selector => widget.querySelector(selector);
-  const dialog = q('dialog'), toast = q('.nn-toast'); let toastTimer;
+  const dialog = q('dialog'), toast = q('.nn-toast'), panel = q('.nn-panel'); let toastTimer;
+  q('.nn-launch').setAttribute('aria-controls', panel.id);
+  q('.nn-launch').setAttribute('aria-expanded', 'false');
+  const closePanel = () => { panel.hidden = true; q('.nn-launch').setAttribute('aria-expanded', 'false'); };
   const key = n => n.id + ':' + (n.updatedAt || n.createdAt);
   const storageKey = type => 'nflixNotice:' + client.serverAddress() + ':' + userId + ':' + type;
   const stored = type => { try { return new Set(JSON.parse(localStorage.getItem(storageKey(type)) || '[]')); } catch { return new Set(); } };
@@ -31,6 +35,18 @@
     const unread = feed.filter(n => !read.has(key(n))).length;
     q('.nn-badge').hidden = !unread; q('.nn-badge').textContent = unread;
     q('[data-mode="admin"]').hidden = !isAdmin;
+    q('[data-panel-admin]').hidden = !isAdmin;
+    const recentFeed = q('.nn-recent-feed'); recentFeed.replaceChildren();
+    const recent = active.slice().sort((a, b) => new Date(b.startsAt) - new Date(a.startsAt)).slice(0, 3);
+    if (!recent.length) { const empty = document.createElement('div'); empty.className = 'nn-empty'; empty.textContent = 'Aucune annonce en cours. Retrouvez les anciennes publications dans votre dashboard.'; recentFeed.append(empty); }
+    for (const n of recent) {
+      const card = document.createElement('article'); card.className = 'nn-card nn-level-' + n.level;
+      const top = document.createElement('div'); top.className = 'nn-card-top'; const tag = document.createElement('span'); tag.className = 'nn-tag'; tag.textContent = categories[n.category] || 'Annonce'; const time = document.createElement('time'); time.dateTime = n.startsAt; time.textContent = formatDate(n.startsAt); top.append(tag, time);
+      const title = document.createElement('h3'); title.textContent = n.title; const message = document.createElement('p'); message.textContent = n.message; card.append(top, title, message);
+      if (n.dismissible && !read.has(key(n))) { const dismiss = document.createElement('button'); dismiss.type = 'button'; dismiss.className = 'nn-secondary'; dismiss.textContent = 'Compris'; dismiss.onclick = () => markRead(n); card.append(dismiss); }
+      else if (read.has(key(n))) { const status = document.createElement('small'); status.className = 'nn-muted'; status.textContent = 'Lue'; card.append(status); }
+      recentFeed.append(card);
+    }
     q('.nn-feed-summary').textContent = feed.length + ' publications / ' + unread + ' non lues';
     const tabs = q('.nn-category-tabs'); tabs.replaceChildren();
     for (const [value, label] of [['', 'Tout le fil'], ...Object.entries(categories)]) { const button = document.createElement('button'); button.type = 'button'; button.textContent = label; button.setAttribute('aria-pressed', String(filter === value)); button.onclick = () => { filter = value; render(); }; tabs.append(button); }
@@ -48,7 +64,7 @@
       card.append(top, title, time, message, actions); list.append(card);
     }
   };
-  const clearSession = () => { generation++; identity = ''; userId = ''; isAdmin = false; active = []; feed = []; read.clear(); shown.clear(); cleanupAdmin?.(); cleanupAdmin = null; q('[data-admin-root]').replaceChildren(); q('[data-admin-root]').hidden = true; q('.nn-user-dashboard').hidden = false; mode = 'user'; filter = ''; query = ''; unreadOnly = false; q('[data-search]').value = ''; q('[data-unread]').checked = false; widget.hidden = true; toast.hidden = true; clearTimeout(toastTimer); if (dialog.open) dialog.close(); };
+  const clearSession = () => { generation++; identity = ''; userId = ''; isAdmin = false; active = []; feed = []; read.clear(); shown.clear(); cleanupAdmin?.(); cleanupAdmin = null; q('[data-admin-root]').replaceChildren(); q('[data-admin-root]').hidden = true; q('.nn-user-dashboard').hidden = false; mode = 'user'; filter = ''; query = ''; unreadOnly = false; q('[data-search]').value = ''; q('[data-unread]').checked = false; widget.hidden = true; toast.hidden = true; closePanel(); clearTimeout(toastTimer); if (dialog.open) dialog.close(); };
   const resolveClient = async () => {
     if (window.ApiClient?.accessToken) return window.ApiClient;
     if (window.require) return new Promise(resolve => { try { window.require(['apiClient'], resolve, () => resolve(null)); } catch { resolve(null); } });
@@ -68,7 +84,7 @@
       if (currentGeneration !== generation || client.serverAddress() + ':' + client.getCurrentUserId() + ':' + client.accessToken() !== nextIdentity) return;
       feed = published; active = current; isAdmin = admin; widget.hidden = false; q('.nn-feed-error').textContent = ''; render();
       const fresh = active.filter(n => n.showPopup !== false && !read.has(key(n)) && !shown.has(key(n))).sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt));
-      if (fresh.length && !dialog.open) {
+      if (fresh.length && !dialog.open && panel.hidden) {
         const n = fresh[0]; shown.add(key(n)); persist();
         toast.dataset.notice = n.id; toast.querySelector('small').textContent = categories[n.category] || 'Nouvelle annonce'; toast.querySelector('strong').textContent = n.title; toast.querySelector('.nn-toast-copy > span').textContent = n.message; toast.className = 'nn-toast nn-level-' + n.level; toast.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => { toast.hidden = true; }, 10000);
       }
@@ -87,13 +103,19 @@
       } catch (error) { q('[data-admin-root]').textContent = error.message; }
     }
   };
-  const open = () => { focusBefore = document.activeElement; toast.hidden = true; if (!dialog.open) dialog.showModal(); render(); refresh(); };
-  q('.nn-launch').onclick = open;
+  const open = () => { focusBefore = q('.nn-launch'); closePanel(); toast.hidden = true; if (!dialog.open) dialog.showModal(); render(); refresh(); };
+  const openPanel = () => { toast.hidden = true; panel.hidden = false; q('.nn-launch').setAttribute('aria-expanded', 'true'); render(); refresh(); };
+  q('.nn-launch').onclick = () => { if (panel.hidden) openPanel(); else closePanel(); };
+  q('.nn-panel-close').onclick = () => { closePanel(); q('.nn-launch').focus(); };
+  q('[data-more]').onclick = () => { showMode('user'); open(); };
+  q('[data-panel-admin]').onclick = () => { open(); showMode('admin'); };
+  document.addEventListener('click', event => { if (!panel.hidden && !widget.contains(event.target)) closePanel(); });
+  document.addEventListener('keydown', event => { if (event.key === 'Escape' && !panel.hidden) { closePanel(); q('.nn-launch').focus(); } });
   q('.nn-close').onclick = () => dialog.close();
   dialog.addEventListener('close', () => { focusBefore?.focus(); });
   dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
   toast.querySelector('button').onclick = event => { event.stopPropagation(); toast.hidden = true; };
-  toast.onclick = () => { const n = active.find(n => n.id === toast.dataset.notice); if (n?.dismissible) markRead(n); open(); };
+  toast.onclick = () => { const n = active.find(n => n.id === toast.dataset.notice); if (n?.dismissible) markRead(n); openPanel(); };
   widget.querySelectorAll('[data-mode]').forEach(button => button.onclick = () => showMode(button.dataset.mode));
   q('[data-search]').oninput = event => { query = event.target.value.trim().toLocaleLowerCase('fr'); render(); };
   q('[data-unread]').onchange = event => { unreadOnly = event.target.checked; render(); };
