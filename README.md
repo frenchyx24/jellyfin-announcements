@@ -5,15 +5,15 @@ Plugin Jellyfin pour annonces et notifications visuelles, avec interface compact
 ## Expérience
 
 - Bouton flottant animé, discret et accessible depuis Jellyfin Web.
-- Panneau d'annonces responsive, animations courtes et navigation clavier.
-- Console d'administration dédiée: publier, programmer et retirer une annonce.
+- Toast animé à l'arrivée d'une annonce, plus panneau responsive.
+- Console d'administration: publier, programmer et retirer une annonce.
 - Trois niveaux: information, attention et important.
 - Texte rendu comme texte, jamais comme HTML fourni par annonce.
 - Lecture réservée aux utilisateurs connectés; écriture réservée aux administrateurs.
 
-## État
+## Version 0.1.1
 
-Dépôt neuf. Cible initiale Jellyfin 12 / .NET 10. Aucun remplacement sur NFLIX avant compilation et validation.
+Build testé sur .NET 10 et ciblant Jellyfin 12. Remplacement sur NFLIX en attente d'installation contrôlée.
 
 ## Développement
 
@@ -24,16 +24,14 @@ dotnet restore
 dotnet build -c Release
 ```
 
-Le projet doit être compilé et testé sur Jellyfin 12 avant publication d'un paquet installable.
+## Installation
 
-## Installation prévue
+Le script client doit être activé dans JavaScript Injector avec l'URL locale: `/Plugins/NflixNotice/client.js`. La console admin apparaît dans Dashboard > Plugins > Nflix Notice.
 
-Après validation, publier paquet dans une release GitHub, installer le plugin, puis activer script client avec JavaScript Injector. URL du script: `/Plugins/NflixNotice/client.js`. Console admin apparaît dans Dashboard > Plugins > Nflix Notice.
-
-L'ancien plugin reste sauvegardé jusqu'à validation complète du remplacement.
+Le bundle d'installation accompagne la release GitHub. Vérifie le build et le checksum avant installation.
 
 ## Sécurité et déploiement
 
-Le script client appelle uniquement l'API du même serveur. Il ne contient aucun secret. La page publique du dépôt ne contient pas de binaire prêt à installer.
+Le script client appelle uniquement l'API du même serveur. Les lectures exigent une connexion Jellyfin; écritures exigent droits administrateur.
 
-Le remplacement du plugin actif nécessite une sauvegarde des annonces et réglages, puis redémarrage contrôlé de Jellyfin.
+L'ancien plugin et ses annonces sont sauvegardés sur NFLIX avant remplacement. Redémarrage Jellyfin requis.
