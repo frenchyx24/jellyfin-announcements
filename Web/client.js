@@ -22,7 +22,8 @@
     else headers.Authorization = 'MediaBrowser Client="Nflix Notice", Device="Web", DeviceId="nflix-notice-web", Version="0.2.0", Token="' + client.accessToken() + '"';
     const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, headers });
     if (!response.ok) { const error = new Error(response.status === 401 ? 'Session expirée. Reconnectez-vous.' : 'Impossible de charger les annonces (' + response.status + ').'); error.status = response.status; throw error; }
-    return response.status === 204 ? null : response.json();
+    const normalize = value => Array.isArray(value) ? value.map(normalize) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key.charAt(0).toLowerCase() + key.slice(1), normalize(item)])) : value;
+    return response.status === 204 ? null : normalize(await response.json());
   };
   const formatDate = value => new Intl.DateTimeFormat('fr-FR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(value));
   const markRead = n => { read.add(key(n)); persist(); render(); };

@@ -15,7 +15,8 @@
       else headers.Authorization = 'MediaBrowser Client="Nflix Notice", Device="Web", DeviceId="nflix-notice-web", Version="0.2.0", Token="' + client.accessToken() + '"';
       const response = await fetch(client.getUrl('Plugins/NflixNotice/' + path), { ...options, signal: abort.signal, headers });
       if (!response.ok) { const text = await response.text(); throw new Error(response.status === 403 ? 'Ce compte ne dispose pas des droits administrateur.' : response.status === 401 ? 'Session expirée. Reconnectez-vous.' : text.slice(0, 300) || 'Erreur serveur ' + response.status); }
-      return response.status === 204 ? null : response.json();
+      const normalize = value => Array.isArray(value) ? value.map(normalize) : value && typeof value === 'object' ? Object.fromEntries(Object.entries(value).map(([key, item]) => [key.charAt(0).toLowerCase() + key.slice(1), normalize(item)])) : value;
+      return response.status === 204 ? null : normalize(await response.json());
     };
     root.innerHTML = `<header class="nn-head"><div><span class="nn-brand">NFLIX / Communication</span><h1>Votre espace de publication</h1><p>Les annonces, les changements et les rendez-vous du serveur.</p></div><button type="button" class="nn-primary" data-new>Nouvelle publication</button></header>
       <div class="nn-stats" aria-label="Résumé des publications"></div><div class="nn-admin-status" role="status" aria-live="polite"></div>
